@@ -1,98 +1,74 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Net;
 using System.Net.Sockets;
-using System.Threading;
-using System.Windows;
+using System.Text;
 
 namespace UDPHolepunching
 {
-    class UDP
+    public class UDP
     {
-        //Definerer variabler der skal være globale
-        private static TcpClient client = new TcpClient(); //Klienten der håndterer at oprette forbindelse
-        private static NetworkStream stream; //Streamen hvor informationen er
-        private static Thread thr; //Threaden hvor receive er
+        public Socket _socket;
+        private const int bufSize = 8 * 1024;
+        private State state = new State();
+        private EndPoint epFrom = new IPEndPoint(IPAddress.Any, 0);
+        private AsyncCallback recv = null;
+        //public string iP;
+        //public int Port;
 
-        static void Main(string[] args)
+        public class State
         {
-            Connection();
-            bool conn = true;
-            while (conn == true)
-            //Opsæt mere elegant måde at håndtere kommandoer på
+            public byte[] buffer = new byte[bufSize];
+        }
+
+        public void Server(string address, int port)
+        {
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.ReuseAddress, true);
+            _socket.Bind(new IPEndPoint(IPAddress.Parse(address), port));
+            Receive();
+        }
+
+        public void Client(string address, int port)
+        {
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _socket.Connect(IPAddress.Parse(address), port);
+            Receive();
+        }
+
+        public void Send(string text)
+        {
+            byte[] data = Encoding.ASCII.GetBytes(text);
+            _socket.BeginSend(data, 0, data.Length, SocketFlags.None, (ar) =>
             {
-                string inp = Console.ReadLine();
-                if (inp == "!DISCONNECT")
+                State so = (State)ar.AsyncState;
+                int bytes = _socket.EndSend(ar);
+                Console.WriteLine("SEND: {0}, {1}", bytes, text);
+            }, state);
+        }
+
+        private void Receive()
+        {
+            _socket.BeginReceiveFrom(state.buffer, 0, bufSize, SocketFlags.None, ref epFrom, recv = (ar) =>
+            {
+                try
                 {
-                    Disconnect();
-                    break;
+                    //_socket.Connect(epFrom);
+                    State so = (State)ar.AsyncState;
+                    int bytes = _socket.EndReceiveFrom(ar, ref epFrom);
+                    _socket.BeginReceiveFrom(so.buffer, 0, bufSize, SocketFlags.None, ref epFrom, recv, so);
+                    //string iP = epFrom.ToString().Remove(epFrom.ToString().Length - 6);
+                    //Console.WriteLine(iP);
+                    //int Port = Convert.ToInt32(epFrom.ToString().Remove(0, epFrom.ToString().Length - 5));
+                    //Console.WriteLine(Port);
+                    //Client(iP, Port);
+                    //Send("Hello");
+
+                    Console.WriteLine("RECV: {0}: {1}, {2}", epFrom.ToString(), bytes, Encoding.ASCII.GetString(so.buffer, 0, bytes));
                 }
-                else
-                {
-                    Send(inp);
-                }
+                catch { }
 
-            }
-
-
+            }, state);
+            //Send("");
         }
-
-        static void Connection() //Skal laves om så method returner false hvis forbindelse ikke kan laves
-        {
-            //Lad brugeren indtaste IP og port
-            Console.WriteLine("Enter server IP:");
-            string ip = Console.ReadLine();
-            Console.WriteLine("Enter port nr:");
-            int port = Convert.ToInt32(Console.ReadLine());
-
-            //Connect og nap en stream
-            client.Connect(ip, port);
-            stream = client.GetStream();
-
-            //Start en ny thr for Recieve
-            thr = new Thread(new ThreadStart(Recieve));
-            thr.Start();
-        }
-        static void Recieve()
-        {
-            while (true)
-            {
-                //Sætter makslængde af beskeden
-                Byte[] bytes = new Byte[256];
-                //Læse fra datastream, encoder som UTF-8, printer til konsollen
-                int data = stream.Read(bytes, 0, bytes.Length);
-                //Kontrollerer, at der conn_check func ikke spammer konsollen med mellemrum
-                if (Encoding.UTF8.GetString(bytes, 0, data) == " ")
-                { }
-                else { Console.Write(Encoding.UTF8.GetString(bytes, 0, data) + "\n"); }
-
-            }
-        }
-
-        static void Send(string inp)
-        {
-            Byte[] msg = Encoding.UTF8.GetBytes(inp);
-            Byte[] length = BitConverter.GetBytes(msg.Length);
-            if (BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(length);
-            }
-            Console.Write(msg);
-            //Sender headeren
-            stream.Write(length, 0, 4);
-            //Sender selve beskeden
-            stream.Write(msg, 0, msg.Length);
-        }
-        static void Disconnect()
-        {
-            thr.Abort();
-            stream.Close();
-            //Sig godnat
-            Console.WriteLine("Forbindelsen er nu lukket");
-        }
-
-
     }
 }
