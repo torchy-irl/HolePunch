@@ -1,0 +1,7 @@
+C:\Users\ejer\Documents\koderod\DDU Chatsystem\UDPHolepunching\UDPHolepunching\bin\Debug\UDPHolepunching.exe.config
+C:\Users\ejer\Documents\koderod\DDU Chatsystem\UDPHolepunching\UDPHolepunching\bin\Debug\UDPHolepunching.exe
+C:\Users\ejer\Documents\koderod\DDU Chatsystem\UDPHolepunching\UDPHolepunching\bin\Debug\UDPHolepunching.pdb
+C:\Users\ejer\Documents\koderod\DDU Chatsystem\UDPHolepunching\UDPHolepunching\obj\Debug\UDPHolepunching.csprojAssemblyReference.cache
+C:\Users\ejer\Documents\koderod\DDU Chatsystem\UDPHolepunching\UDPHolepunching\obj\Debug\UDPHolepunching.csproj.CoreCompileInputs.cache
+C:\Users\ejer\Documents\koderod\DDU Chatsystem\UDPHolepunching\UDPHolepunching\obj\Debug\UDPHolepunching.exe
+C:\Users\ejer\Documents\koderod\DDU Chatsystem\UDPHolepunching\UDPHolepunching\obj\Debug\UDPHolepunching.pdb
